@@ -3,7 +3,6 @@ from sqlalchemy import exc
 
 import models
 import schemas
-from schemas import BookCreate, AuthorCreate
 
 
 def get_all_books(
@@ -16,12 +15,6 @@ def get_all_books(
         return db.query(models.DBBook).filter(
             models.DBBook.author_id == author_id).offset(skip).limit(limit).all()
     return db.query(models.DBBook).offset(skip).limit(limit).all()
-
-
-def get_books_by_author_id(db: Session, author_id: int):
-    return db.query(
-        models.DBBook).filter(
-        models.DBBook.author_id == author_id).all()
 
 
 def create_book_for_author(db: Session, book_data: schemas.BookCreate):
@@ -53,10 +46,10 @@ def create_book_for_author(db: Session, book_data: schemas.BookCreate):
     return new_book
 
 
-def create_author(db: Session, author_data: AuthorCreate):
+def create_author(db: Session, author_data: schemas.AuthorCreate):
 
     author_existing = db.query(models.DBAuthor).filter(
-        author_data.name == models.DBAuthor.name).first()
+        models.DBAuthor.name == author_data.name).first()
 
     if author_existing:
         raise ValueError(f"Author with name '{author_data.name}' already exists.")
@@ -79,6 +72,7 @@ def create_author(db: Session, author_data: AuthorCreate):
 
 def get_all_authors(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.DBAuthor).offset(skip).limit(limit).all()
+
 
 def get_author_by_id(db: Session, author_id: int):
     return db.query(models.DBAuthor).filter(models.DBAuthor.id == author_id).first()
