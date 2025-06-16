@@ -29,6 +29,5 @@ class DBAuthor(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, unique=True)
     bio = Column(String(511), nullable=True)
-    books_id = Column(Integer, ForeignKey("books.id"))
 
     books = relationship("DBBook", back_populates="author")

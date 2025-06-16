@@ -52,7 +52,7 @@ def create_author(db: Session, author_data: schemas.AuthorCreate):
         models.DBAuthor.name == author_data.name).first()
 
     if author_existing:
-        raise ValueError(f"Author with name '{author_data.name}' already exists.")
+        raise ValueError(f"Автор з іменем '{author_data.name}' вже існує.")
 
     new_author = models.DBAuthor(
         name=author_data.name,
@@ -64,10 +64,10 @@ def create_author(db: Session, author_data: schemas.AuthorCreate):
         db.refresh(new_author)
     except exc.IntegrityError:
         db.rollback()
-        raise ValueError("Some error occurred while creating the author.")
+        raise ValueError("Помилка цілісності даних при створенні автора.")
     except Exception as e:
         db.rollback()
-        raise Exception(f"An unexpected error occurred: {e}")
+        raise Exception(f"Несподівана помилка при створенні автора: {e}")
 
 
 def get_all_authors(db: Session, skip: int = 0, limit: int = 100):
