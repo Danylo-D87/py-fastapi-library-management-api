@@ -2,10 +2,19 @@ from sqlalchemy.orm import Session
 from sqlalchemy import exc
 
 import models
-from schemas import BookCreate
+import schemas
+from schemas import BookCreate, AuthorCreate
 
 
-def get_all_books(db: Session, skip: int = 0, limit: int = 100):
+def get_all_books(
+        db: Session,
+        author_id: int = None,
+        skip: int = 0,
+        limit: int = 100,
+):
+    if author_id:
+        return db.query(models.DBBook).filter(
+            models.DBBook.author_id == author_id).offset(skip).limit(limit).all()
     return db.query(models.DBBook).offset(skip).limit(limit).all()
 
 
@@ -15,14 +24,14 @@ def get_books_by_author_id(db: Session, author_id: int):
         models.DBBook.author_id == author_id).all()
 
 
-def create_book_for_author(db: Session, book_data: BookCreate):
+def create_book_for_author(db: Session, book_data: schemas.BookCreate):
 
-    author_existing = db.query(models.DBAuthor).filter(
+    author_exists = db.query(models.DBAuthor).filter(
         models.DBAuthor.id == book_data.author_id
     ).first()
 
-    if not author_existing:
-        raise ValueError(f"Author with id '{book_data.author_id}' does not exist.")
+    if not author_exists:
+        raise ValueError(f"Автор з ID '{book_data.author_id}' не існує.")
 
     new_book = models.DBBook(
         title=book_data.title,
@@ -36,9 +45,40 @@ def create_book_for_author(db: Session, book_data: BookCreate):
         db.refresh(new_book)
     except exc.IntegrityError:
         db.rollback()
-        raise ValueError("Some error occurred while creating the book.")
+        raise ValueError("Помилка цілісності даних при створенні книги.")
+    except Exception as e:
+        db.rollback()
+        raise Exception(f"Несподівана помилка при створенні книги: {e}")
+
+    return new_book
+
+
+def create_author(db: Session, author_data: AuthorCreate):
+
+    author_existing = db.query(models.DBAuthor).filter(
+        author_data.name == models.DBAuthor.name).first()
+
+    if author_existing:
+        raise ValueError(f"Author with name '{author_data.name}' already exists.")
+
+    new_author = models.DBAuthor(
+        name=author_data.name,
+        bio=author_data.bio
+    )
+    try:
+        db.add(new_author)
+        db.commit()
+        db.refresh(new_author)
+    except exc.IntegrityError:
+        db.rollback()
+        raise ValueError("Some error occurred while creating the author.")
     except Exception as e:
         db.rollback()
         raise Exception(f"An unexpected error occurred: {e}")
 
-    return new_book
+
+def get_all_authors(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.DBAuthor).offset(skip).limit(limit).all()
+
+def get_author_by_id(db: Session, author_id: int):
+    return db.query(models.DBAuthor).filter(models.DBAuthor.id == author_id).first()
